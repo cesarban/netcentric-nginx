@@ -1,87 +1,64 @@
-# nginx
+# nginx for netcentric
+Hi everyone in netcentric team!
+Welcome to This module.
 
-Welcome to your new module. A short overview of the generated parts can be found in the PDK documentation at https://puppet.com/pdk/latest/pdk_generating_modules.html .
+The general propouse of this module is replace the configuration of nginx to permit the next settings:
 
-The README template below provides a starting point with details about what information to include in your README.
+1. Create a proxy to redirect requests for https://domain.com to 10.10.10.10 and redirect requests for https://domain.com/resource to 20.20.20.20.
+2. Create a forward proxy to log HTTP requests going from the internal network to the Internet including: request protocol, remote IP and time take to serve the request.
+3. (Optional) Implement a proxy health check.
+
+At the end let me explain you why a follow this way to get the task done in order to you understand what is my puppet level and the way that I solved this issue.
 
 #### Table of Contents
 
 1. [Description](#description)
-2. [Setup - The basics of getting started with nginx](#setup)
-    * [What nginx affects](#what-nginx-affects)
-    * [Setup requirements](#setup-requirements)
-    * [Beginning with nginx](#beginning-with-nginx)
-3. [Usage - Configuration options and additional functionality](#usage)
-4. [Limitations - OS compatibility, etc.](#limitations)
-5. [Development - Guide for contributing to the module](#development)
+2. [Files changed](#files-changed)
+3. [Installing this module](#installing-this-module)
+4. [How I have done this](#how-i-have-done-this)
 
 ## Description
 
-Briefly tell users why they might want to use your module. Explain what your module does and what kind of problems users can solve with it.
+The configuration has be changed only modifiying nginx.conf and use the manifest only to replace this file.
 
-This should be a fairly short description helps the user decide if your module is what they want.
+### Files changed
+/netcentric_nginx/files/nginx.conf
+/netcentric_nginx/manifest/init.pp
 
-## Setup
+### Installing this module
+puppet module install --module_repository  https://github.com/cesarban/netcentric-nginx.git
 
-### What nginx affects **OPTIONAL**
 
-If it's obvious what your module touches, you can skip this section. For example, folks can probably figure out that your mysql_instance module affects their MySQL instances.
+### How I have done this
 
-If there's more that they should know about, though, this is the place to mention:
+My skills of puppet is pure basic, and I had no time to have a course to do this task. Searching in the web for a quikly way to build a puppet module, I found the PDK tool, that  build a puppet module with all the basic things and you only have to add your files and manifest.
+I follow the instructions of build a empty module with the structure.
+https://puppet.com/docs/pdk/1.x/pdk_creating_modules.html#create-module
 
-* Files, packages, services, or operations that the module will alter, impact, or execute.
-* Dependencies that your module automatically installs.
-* Warnings or other important notices.
 
-### Setup Requirements **OPTIONAL**
-
-If your module requires anything extra before setting up (pluginsync enabled, another module, etc.), mention it here.
-
-If your most recent release breaks compatibility or requires particular steps for upgrading, you might want to include an additional "Upgrading" section here.
-
-### Beginning with nginx
-
-The very basic steps needed for a user to get the module up and running. This can include setup steps, if necessary, or it can be an example of the most basic use of the module.
-
-## Usage
-
-Include usage examples for common use cases in the **Usage** section. Show your users how to use your module to solve problems, and be sure to include code examples. Include three to five examples of the most important or common tasks a user can accomplish with your module. Show users how to accomplish more complex tasks that involve different types, classes, and functions working in tandem.
-
-## Reference
-
-This section is deprecated. Instead, add reference information to your code as Puppet Strings comments, and then use Strings to generate a REFERENCE.md in your module. For details on how to add code comments and generate documentation with Strings, see the Puppet Strings [documentation](https://puppet.com/docs/puppet/latest/puppet_strings.html) and [style guide](https://puppet.com/docs/puppet/latest/puppet_strings_style.html)
-
-If you aren't ready to use Strings yet, manually create a REFERENCE.md in the root of your module directory and list out each of your module's classes, defined types, facts, functions, Puppet tasks, task plans, and resource types and providers, along with the parameters for each.
-
-For each element (class, defined type, function, and so on), list:
-
-  * The data type, if applicable.
-  * A description of what the element does.
-  * Valid values, if the data type doesn't make it obvious.
-  * Default value, if any.
-
-For example:
-
+I triyed to include all the configuration inside init.pp
+I find  the ocnfiguration for the first part of the task. Let me show you:
 ```
-### `pet::cat`
-
-#### Parameters
-
-##### `meow`
-
-Enables vocalization in your cat. Valid options: 'string'.
-
-Default: 'medium-loud'.
+include nginx
+class { "nginx":
+manage_repo => true,
+package_source => 'nginx-stable'
+}
+{
+nginx::resource::location{'/':
+proxy  => 'https://10.10.10.10/' ,
+server => 'domain.com',
+}
+nginx::resource::location{'/resource':
+proxy => 'https://20.20.20.20/' ,
+server => 'domain.com',
+}
 ```
+But I can't find the part of healt check and log format for proxy forward. I spent my time without results... Then I decide to publish this. This configuration has the next prerequistes:
+- Linux Redhat, Centos, Ubuntu, ...you can check all OS supported in metadata.json
+- This module only change a preexisting nginx where you want to replace the configuration.
 
-## Limitations
-
-In the Limitations section, list any incompatibilities, known issues, or other warnings.
-
-## Development
-
-In the Development section, tell other users the ground rules for contributing to your project and how they should submit their work.
-
-## Release Notes/Contributors/Etc. **Optional**
-
-If you aren't using changelog, put your release notes here (though you should consider using changelog). You can also add any additional sections you feel are necessary or important to include here. Please use the `## ` header.
+That's all.
+I hope see you soon.
+Cesar Aguirre
+aguirre.cesar@gmail.com
